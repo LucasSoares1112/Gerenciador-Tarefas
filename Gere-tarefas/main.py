@@ -38,6 +38,7 @@ def adicionar_tarefa():
     conn.close()
 
     st.session_state["entrada_tarefa"] = ""
+    st.rerun() # <-- AQUI ESTÁ A CORREÇÃO!
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
@@ -97,11 +98,9 @@ with st.container():
                     key=f"status_{row["id"]}"
                 )
 
-                # Aqui está a correção: passando os dois argumentos corretamente
                 if novo_status != status_atual:
                     atualizar_status(row["id"], novo_status)
 
-                # Aqui está a correção: chamando a função com o nome correto
                 if c3.button("🗑️", key=f"delete_{row["id"]}"):
                     deletar_tarefa(row["id"])
 
