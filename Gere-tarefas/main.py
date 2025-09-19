@@ -38,7 +38,8 @@ def adicionar_tarefa():
     conn.close()
 
     st.session_state["entrada_tarefa"] = ""
-    st.rerun() # <-- AQUI ESTÁ A CORREÇÃO!
+    # REMOVA A LINHA ABAIXO!
+    # st.rerun() 
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
@@ -105,6 +106,7 @@ with st.container():
                     deletar_tarefa(row["id"])
 
     with col_dir:
+        # O gráfico só aparecerá se houver tarefas na lista
         if not lista_tarefas.empty:
             dados_progresso = lista_tarefas['status'].value_counts().reset_index()
             dados_progresso.columns = ['Status', 'Quantidade']
