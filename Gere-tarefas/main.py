@@ -1,28 +1,10 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 import plotly.express as px
 
-# Conexão com o banco de dados
-def conectar_bd():
-    conn = sqlite3.connect("tarefas.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tarefas(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tarefa TEXT NOT NULL,
-            status TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    return conn
-
-# Carregar as tarefas do banco de dados
-def carregar_tarefas():
-    conn = conectar_bd()
-    df = pd.read_sql("SELECT * FROM tarefas", conn)
-    conn.close()
-    return df
+# Inicializa a lista de tarefas na sessão
+if "tarefas" not in st.session_state:
+    st.session_state.tarefas = []
 
 # Adicionar nova tarefa
 def adicionar_tarefa():
@@ -30,36 +12,32 @@ def adicionar_tarefa():
     if not tarefa:
         st.error("A tarefa não pode estar vazia!")
         return
-
-    conn = conectar_bd()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO tarefas (tarefa, status) VALUES (?, ?)", (tarefa, "Pendente"))
-    conn.commit()
-    conn.close()
+    
+    # Adiciona a nova tarefa à lista da sessão
+    novo_id = len(st.session_state.tarefas) + 1
+    nova_tarefa = {"id": novo_id, "tarefa": tarefa, "status": "Pendente"}
+    st.session_state.tarefas.append(nova_tarefa)
 
     st.session_state["entrada_tarefa"] = ""
-    # REMOVA A LINHA ABAIXO!
-    # st.rerun() 
+    st.rerun()
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
-    conn = conectar_bd()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tarefas SET status = ? WHERE id = ?", (status, tarefa_id))
-    conn.commit()
-    conn.close()
+    for tarefa in st.session_state.tarefas:
+        if tarefa["id"] == tarefa_id:
+            tarefa["status"] = status
     st.rerun()
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
-    conn = conectar_bd()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
-    conn.commit()
-    conn.close()
+    st.session_state.tarefas = [tarefa for tarefa in st.session_state.tarefas if tarefa["id"] != tarefa_id]
     st.rerun()
 
+# Carregar as tarefas da sessão
+def carregar_tarefas():
+    return pd.DataFrame(st.session_state.tarefas)
 
+# ---
 # Configuração da página
 st.set_page_config(
     page_title="App de Tarefas",
@@ -70,7 +48,7 @@ st.title("Gerenciador de Tarefas")
 st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa")
 st.button("Adicionar", on_click=adicionar_tarefa)
 
-# Carregar tarefas
+# Carregar tarefas da sessão
 lista_tarefas = carregar_tarefas()
 
 # Container principal
@@ -106,7 +84,6 @@ with st.container():
                     deletar_tarefa(row["id"])
 
     with col_dir:
-        # O gráfico só aparecerá se houver tarefas na lista
         if not lista_tarefas.empty:
             dados_progresso = lista_tarefas['status'].value_counts().reset_index()
             dados_progresso.columns = ['Status', 'Quantidade']
