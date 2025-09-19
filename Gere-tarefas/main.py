@@ -13,25 +13,21 @@ def adicionar_tarefa():
         st.error("A tarefa não pode estar vazia!")
         return
     
-    # Adiciona a nova tarefa à lista da sessão
     novo_id = len(st.session_state.tarefas) + 1
     nova_tarefa = {"id": novo_id, "tarefa": tarefa, "status": "Pendente"}
     st.session_state.tarefas.append(nova_tarefa)
 
     st.session_state["entrada_tarefa"] = ""
-    # st.rerun() foi removido daqui!
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
     for tarefa in st.session_state.tarefas:
         if tarefa["id"] == tarefa_id:
             tarefa["status"] = status
-    # st.rerun() foi removido daqui!
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
     st.session_state.tarefas = [tarefa for tarefa in st.session_state.tarefas if tarefa["id"] != tarefa_id]
-    # st.rerun() foi removido daqui!
 
 # Carregar as tarefas da sessão
 def carregar_tarefas():
@@ -50,6 +46,9 @@ st.button("Adicionar", on_click=adicionar_tarefa)
 
 # Carregar tarefas da sessão
 lista_tarefas = carregar_tarefas()
+
+# ESTA É A LINHA QUE VAMOS TESTAR!
+st.write(st.session_state.tarefas)
 
 # Container principal
 with st.container():
