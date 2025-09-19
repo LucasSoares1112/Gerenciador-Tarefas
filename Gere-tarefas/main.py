@@ -115,4 +115,39 @@ with st.container():
                 "Pendente": "#fbbf24",
                 "Concluída": "#10b981"
             }
-            cores = [cores_personalizadas.get(status, "#60a5fa") for status in dados_progresso] 
+            cores = [cores_personalizadas.get(status, "#60a5fa") for status in dados_progresso]
+
+            fig = px.pie(
+                dados_progresso,
+                names="Status",
+                values="Quantidade",
+                title="📊 Progresso das Tarefas",
+                color="Status",
+                color_discrete_map=cores_personalizadas,
+                hole=0.4,
+            )
+
+            fig.update_traces(
+                textposition="inside",
+                textinfo="percent+label",
+                marker=dict(line=dict(color='#ffffff', width=2)),
+                pull=[0.05 if s == "Pendente" else 0 for s in dados_progresso["Status"]],
+            )
+
+            fig.update_layout(
+                title_font_size=22,
+                font=dict(family="Segoe UI, sans-serif", size=16),
+                paper_bgcolor="#f9fafb",
+                plot_bgcolor="#f9fafb",
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.2,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=14)
+                )
+            )
+
+            st.plotly_chart(fig, use_container_width=True) 
