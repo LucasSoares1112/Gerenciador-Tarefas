@@ -47,9 +47,6 @@ st.button("Adicionar", on_click=adicionar_tarefa)
 # Carregar tarefas da sessão
 lista_tarefas = carregar_tarefas()
 
-# ESTA É A LINHA QUE VAMOS TESTAR!
-st.write(st.session_state.tarefas)
-
 # Container principal
 with st.container():
     col_esq, col_dir = st.columns(2)
@@ -59,6 +56,7 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 c1, c2, c3 = st.columns([5, 2, 1])
                 with c1:
+                    # AQUI ESTÁ A CORREÇÃO NO HTML
                     st.markdown(f"""
                         <div style = "padding: 1rem; margin: 1rem 0; background: #f8fafc; border-radius: 8px;
                         border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05) ">
