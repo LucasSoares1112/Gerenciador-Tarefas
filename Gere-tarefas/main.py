@@ -39,7 +39,7 @@ def adicionar_tarefa():
 
     st.session_state["entrada_tarefa"] = ""
 
-#Atualizar status das tarefas
+# Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
     conn = conectar_bd()
     cursor = conn.cursor()
@@ -48,17 +48,14 @@ def atualizar_status(tarefa_id, status):
     conn.close()
     st.rerun()
 
-
-#deletar tarefas
+# Deletar tarefas
 def deletar_tarefa(tarefa_id):
     conn = conectar_bd()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,)) # A vírgula é importante!
+    cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
     conn.commit()
     conn.close()
     st.rerun()
-
-
 
 
 # Configuração da página
@@ -68,13 +65,13 @@ st.set_page_config(
 )
 
 st.title("Gerenciador de Tarefas")
-st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa" )
-st.button("Adicionar", on_click= adicionar_tarefa)
+st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa")
+st.button("Adicionar", on_click=adicionar_tarefa)
 
-#Carrefar tarefas
+# Carregar tarefas
 lista_tarefas = carregar_tarefas()
 
-#  Container principal
+# Container principal
 with st.container():
     col_esq, col_dir = st.columns(2)
 
@@ -87,9 +84,10 @@ with st.container():
                         <div style = "padding: 1rem; margin: 1rem 0; background: #f8fafc; border-radius: 8px;
                         border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05) ">
                             {row["tarefa"]}
-                        <\div>        
+                        </div>
                     """, unsafe_allow_html=True)
-                opcoes_status = ["Pendente", "Concluida"]
+                
+                opcoes_status = ["Pendente", "Concluída"]
                 status_atual = row["status"]
 
                 novo_status = c2.selectbox(
@@ -99,12 +97,13 @@ with st.container():
                     key=f"status_{row["id"]}"
                 )
 
+                # Aqui está a correção: passando os dois argumentos corretamente
                 if novo_status != status_atual:
-                    atualizar_status(row["id", novo_status])
+                    atualizar_status(row["id"], novo_status)
 
+                # Aqui está a correção: chamando a função com o nome correto
                 if c3.button("🗑️", key=f"delete_{row["id"]}"):
-                    deletar_tarefas(row["id"]) 
-
+                    deletar_tarefa(row["id"])
 
     with col_dir:
         if not lista_tarefas.empty:
@@ -115,8 +114,7 @@ with st.container():
                 "Pendente": "#fbbf24",
                 "Concluída": "#10b981"
             }
-            cores = [cores_personalizadas.get(status, "#60a5fa") for status in dados_progresso]
-
+            
             fig = px.pie(
                 dados_progresso,
                 names="Status",
@@ -150,4 +148,4 @@ with st.container():
                 )
             )
 
-            st.plotly_chart(fig, use_container_width=True) 
+            st.plotly_chart(fig, use_container_width=True)
