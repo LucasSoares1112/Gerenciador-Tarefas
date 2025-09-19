@@ -19,19 +19,19 @@ def adicionar_tarefa():
     st.session_state.tarefas.append(nova_tarefa)
 
     st.session_state["entrada_tarefa"] = ""
-    st.rerun()
+    # st.rerun() foi removido daqui!
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, status):
     for tarefa in st.session_state.tarefas:
         if tarefa["id"] == tarefa_id:
             tarefa["status"] = status
-    st.rerun()
+    # st.rerun() foi removido daqui!
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
     st.session_state.tarefas = [tarefa for tarefa in st.session_state.tarefas if tarefa["id"] != tarefa_id]
-    st.rerun()
+    # st.rerun() foi removido daqui!
 
 # Carregar as tarefas da sessão
 def carregar_tarefas():
