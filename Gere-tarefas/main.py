@@ -2,11 +2,9 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
-from datetime import datetime
 import os
-import pytz
+from datetime import datetime, date
 
-# --- Funções de Banco de Dados ---
 def conectar_bd():
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
@@ -15,7 +13,7 @@ def conectar_bd():
 
     if tabela_existe:
         try:
-            cursor.execute("SELECT timestamp FROM tarefas LIMIT 1")
+            cursor.execute("SELECT due_date FROM tarefas LIMIT 1")
         except sqlite3.OperationalError:
             conn.close()
             os.remove("tarefas.db")
@@ -26,7 +24,8 @@ def conectar_bd():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tarefa TEXT NOT NULL,
             status TEXT NOT NULL,
-            timestamp TEXT NOT NULL
+            timestamp TEXT NOT NULL,
+            due_date TEXT
         )
     """)
     conn.commit()
@@ -40,18 +39,17 @@ def carregar_tarefas():
 
 def adicionar_tarefa():
     tarefa = st.session_state.get("entrada_tarefa", "").strip()
+    due_date = st.session_state.get("due_date", None)
+    
     if not tarefa:
         st.error("A tarefa não pode estar vazia!")
         return
     
-    # PEGA A HORA UTC E CONVERTE PARA SÃO PAULO
-    utc_now = datetime.now(pytz.utc)
-    sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
-    data_hora_atual = utc_now.astimezone(sao_paulo_tz).strftime("%d/%m/%Y %H:%M:%S")
+    data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp) VALUES (?, ?, ?)", (tarefa, "Pendente", data_hora_atual))
+    cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp, due_date) VALUES (?, ?, ?, ?)", (tarefa, "Pendente", data_hora_atual, str(due_date)))
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
@@ -73,7 +71,6 @@ def deletar_tarefa(tarefa_id):
     conn.close()
     st.rerun()
 
-# --- Layout do Aplicativo ---
 st.set_page_config(
     page_title="App de Tarefas",
     layout="wide",
@@ -81,9 +78,11 @@ st.set_page_config(
 
 st.title("Gerenciador de Tarefas")
 
-col_input, col_btn = st.columns([8, 1])
+col_input, col_date, col_btn = st.columns([6, 2, 1])
 with col_input:
     st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
+with col_date:
+    st.date_input("Data de Vencimento:", key="due_date", value=date.today())
 with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
@@ -97,6 +96,12 @@ with st.container():
         if not lista_tarefas.empty:
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
+                
+                hoje = date.today()
+                data_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d").date()
+                tarefa_atrasada = data_vencimento < hoje and not tarefa_concluida
+
+                borda_cor = "red" if tarefa_atrasada else "#3b82f6"
 
                 col_chk, col_txt, col_lix = st.columns([0.8, 5, 1])
                 
@@ -109,10 +114,10 @@ with st.container():
                     if tarefa_concluida:
                         tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
                         
-                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Adicionado em: {row['timestamp']}</span>"
+                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_vencimento.strftime('%d/%m/%Y')}</span>"
 
                     st.markdown(f"""
-                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
+                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid {borda_cor}; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black; font-weight: {'bold' if tarefa_atrasada else 'normal'};">
                             {tarefa_texto}
                             {data_texto}
                         </div>
