@@ -29,7 +29,7 @@ def adicionar_tarefa():
         st.error("A tarefa não pode estar vazia!")
         return
 
-    conn = conectar_bd()
+    conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO tarefas (tarefa, status) VALUES (?, ?)", (tarefa, "Pendente"))
     conn.commit()
@@ -38,7 +38,7 @@ def adicionar_tarefa():
     st.rerun()
 
 def atualizar_status(tarefa_id, novo_status):
-    conn = conectar_bd()
+    conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
     cursor.execute("UPDATE tarefas SET status = ? WHERE id = ?", (novo_status, tarefa_id))
     conn.commit()
@@ -46,7 +46,7 @@ def atualizar_status(tarefa_id, novo_status):
     st.rerun()
 
 def deletar_tarefa(tarefa_id):
-    conn = conectar_bd()
+    conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
     cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
     conn.commit()
@@ -61,7 +61,6 @@ st.set_page_config(
 
 st.title("Gerenciador de Tarefas")
 
-# Campo de entrada de tarefa com botão Add separado
 col_input, col_btn = st.columns([8, 1])
 with col_input:
     st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
@@ -69,11 +68,8 @@ with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
 
-
-# Carregar tarefas
 lista_tarefas = carregar_tarefas()
 
-# Container principal para as colunas de tarefas e gráfico
 with st.container():
     col_esq, col_dir = st.columns(2)
 
@@ -82,31 +78,32 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
 
-                # Layout de três colunas para cada tarefa: checkbox, texto e lixeira
                 col_chk, col_txt, col_lix = st.columns([0.8, 5, 1])
                 
                 with col_chk:
-                    # Alinha o checkbox
                     st.markdown("<br>", unsafe_allow_html=True)
                     checkbox_state = st.checkbox("", key=f"checkbox_{row['id']}", value=tarefa_concluida, label_visibility="collapsed")
                 
                 with col_txt:
-                    # Restaura a estilização de caixa para a tarefa
-                    tarefa_texto = f"~~{row['tarefa']}~~" if checkbox_state else row['tarefa']
-                    st.markdown(f"""
-                        <div style = "padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px;
-                        border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
-                            {tarefa_texto}
-                        </div>
-                    """, unsafe_allow_html=True)
-
+                    if checkbox_state:
+                        # Risco via HTML para não mostrar o ~~
+                        st.markdown(f"""
+                            <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
+                                <span style="text-decoration: line-through;">{row['tarefa']}</span>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                            <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
+                                {row['tarefa']}
+                            </div>
+                        """, unsafe_allow_html=True)
+                
                 with col_lix:
-                    # Alinha o botão de lixeira
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("🗑️", key=f"delete_{row['id']}", help="Excluir Tarefa"):
                         deletar_tarefa(row['id'])
                 
-                # A lógica de atualização do status permanece, mas sem o selectbox
                 novo_status = "Concluída" if checkbox_state else "Pendente"
                 if novo_status != row["status"]:
                     atualizar_status(row["id"], novo_status)
@@ -117,8 +114,8 @@ with st.container():
             dados_progresso.columns = ['Status', 'Quantidade']
             
             cores_personalizadas = {
-                "Pendente": "#fbbf24", # Amarelo
-                "Concluída": "#10b981" # Verde
+                "Pendente": "#fbbf24",
+                "Concluída": "#10b981"
             }
             
             fig = px.pie(
