@@ -97,11 +97,23 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
                 
-                hoje = date.today()
-                data_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d").date()
-                tarefa_atrasada = data_vencimento < hoje and not tarefa_concluida
+                # VERIFICA SE A COLUNA 'due_date' EXISTE
+                if 'due_date' in row and row['due_date']:
+                    try:
+                        data_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d").date()
+                        hoje = date.today()
+                        tarefa_atrasada = data_vencimento < hoje and not tarefa_concluida
+                        borda_cor = "red" if tarefa_atrasada else "#3b82f6"
+                        data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_vencimento.strftime('%d/%m/%Y')}</span>"
+                    except (ValueError, TypeError):
+                        # Se a data estiver em formato inválido
+                        borda_cor = "#3b82f6"
+                        data_texto = "<br><span style='font-size: 0.8em; color: gray;'>Vencimento: N/A</span>"
+                else:
+                    # Se a coluna 'due_date' não existir
+                    borda_cor = "#3b82f6"
+                    data_texto = ""
 
-                borda_cor = "red" if tarefa_atrasada else "#3b82f6"
 
                 col_chk, col_txt, col_lix = st.columns([0.8, 5, 1])
                 
@@ -114,10 +126,8 @@ with st.container():
                     if tarefa_concluida:
                         tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
                         
-                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_vencimento.strftime('%d/%m/%Y')}</span>"
-
                     st.markdown(f"""
-                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid {borda_cor}; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black; font-weight: {'bold' if tarefa_atrasada else 'normal'};">
+                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid {borda_cor}; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black; font-weight: {'bold' if 'tarefa_atrasada' in locals() and tarefa_atrasada else 'normal'};">
                             {tarefa_texto}
                             {data_texto}
                         </div>
