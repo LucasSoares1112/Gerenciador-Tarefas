@@ -5,6 +5,62 @@ import plotly.express as px
 import os
 from datetime import datetime, date, time
 
+# --- CSS para Estilização Sofisticada ---
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+html, body, [class*="st-"] {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Alinhar o botão de adicionar */
+.st-emotion-cache-12803q a {
+    text-align: right;
+}
+
+/* Estilo para as caixas de tarefas */
+.task-card {
+    padding: 1rem;
+    margin: 0.5rem 0;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    color: black;
+    transition: transform 0.2s;
+}
+
+/* Efeito de hover */
+.task-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Estilo de texto do vencimento */
+.due-date {
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+/* Estilo para tarefas atrasadas */
+.overdue {
+    border-left: 4px solid #e74c3c;
+    font-weight: 600;
+}
+
+/* Estilo para tarefas concluídas */
+.completed-text {
+    text-decoration: line-through;
+}
+
+/* Alinhamento de colunas da tarefa */
+.st-emotion-cache-1f19s0 a {
+    padding-top: 15px !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 # --- Funções de Banco de Dados ---
 def conectar_bd():
     conn = sqlite3.connect("tarefas.db")
@@ -14,7 +70,6 @@ def conectar_bd():
 
     if tabela_existe:
         try:
-            # Verifica se a tabela tem a coluna 'due_date'
             cursor.execute("SELECT due_date FROM tarefas LIMIT 1")
         except sqlite3.OperationalError:
             conn.close()
@@ -50,7 +105,6 @@ def adicionar_tarefa():
 
     data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-    # Combina a data e a hora de vencimento
     data_e_hora_vencimento = datetime.combine(due_date, due_time).strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
@@ -96,6 +150,7 @@ with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
 
+conectar_bd()
 lista_tarefas = carregar_tarefas()
 
 with st.container():
@@ -106,17 +161,16 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
                 
-                # VERIFICA SE A TAREFA ESTÁ ATRASADA COM BASE EM DATA E HORA
                 if 'due_date' in row and row['due_date']:
                     try:
                         data_e_hora_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d %H:%M:%S")
                         agora = datetime.now()
                         tarefa_atrasada = agora > data_e_hora_vencimento and not tarefa_concluida
-                        borda_cor = "red" if tarefa_atrasada else "#3b82f6"
-                        data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_e_hora_vencimento.strftime('%d/%m/%Y %H:%M:%S')}</span>"
+                        borda_cor = "#e74c3c" if tarefa_atrasada else "#3b82f6"
+                        data_texto = f"<span class='due-date'>Vencimento: {data_e_hora_vencimento.strftime('%d/%m/%Y %H:%M')}</span>"
                     except (ValueError, TypeError):
                         borda_cor = "#3b82f6"
-                        data_texto = "<br><span style='font-size: 0.8em; color: gray;'>Vencimento: N/A</span>"
+                        data_texto = "<span class='due-date'>Vencimento: N/A</span>"
                 else:
                     borda_cor = "#3b82f6"
                     data_texto = ""
@@ -131,12 +185,15 @@ with st.container():
                 with col_txt:
                     tarefa_texto = f"<span>{row['tarefa']}</span>"
                     if tarefa_concluida:
-                        tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
+                        tarefa_texto = f"<span class='completed-text'>{row['tarefa']}</span>"
                         
+                    card_style_class = "task-card overdue" if ('tarefa_atrasada' in locals() and tarefa_atrasada) else "task-card"
+                    card_style_class += " completed" if tarefa_concluida else ""
+                    
                     st.markdown(f"""
-                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid {borda_cor}; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black; font-weight: {'bold' if 'tarefa_atrasada' in locals() and tarefa_atrasada else 'normal'};">
+                        <div class="{card_style_class}" style="border-left: 4px solid {borda_cor};">
                             {tarefa_texto}
-                            {data_texto}
+                            <br>{data_texto}
                         </div>
                     """, unsafe_allow_html=True)
                 
@@ -144,10 +201,15 @@ with st.container():
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("🗑️", key=f"delete_{row['id']}", help="Excluir Tarefa"):
                         deletar_tarefa(row['id'])
-                
+
                 novo_status = "Concluída" if checkbox_state else "Pendente"
                 if novo_status != row["status"]:
                     atualizar_status(row["id"], novo_status)
+
+            if not lista_tarefas.empty and lista_tarefas['status'].eq('Concluída').all():
+                st.balloons()
+                st.success("🎉 Todas as tarefas concluídas! Parabéns!")
+
     
     with col_dir:
         if not lista_tarefas.empty:
@@ -155,8 +217,8 @@ with st.container():
             dados_progresso.columns = ['Status', 'Quantidade']
             
             cores_personalizadas = {
-                "Pendente": "#fbbf24",
-                "Concluída": "#10b981"
+                "Pendente": "#FFC04C", # Amarelo mais suave
+                "Concluída": "#2ECC71" # Verde mais suave
             }
             
             fig = px.pie(
@@ -166,7 +228,7 @@ with st.container():
                 title="📊 Progresso das Tarefas",
                 color="Status",
                 color_discrete_map=cores_personalizadas,
-                hole=0.4,
+                hole=0.5,
             )
 
             fig.update_traces(
@@ -177,9 +239,9 @@ with st.container():
             )
 
             fig.update_layout(
-                title_font_size=22,
+                title_font_size=24,
                 title_font_color="white",
-                font=dict(family="Segoe UI, sans-serif", size=16, color="white"),
+                font=dict(family="Montserrat, sans-serif", size=16, color="white"),
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=True,
