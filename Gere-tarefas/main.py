@@ -5,7 +5,6 @@ import plotly.express as px
 import os
 from datetime import datetime
 
-
 # --- Funções de Banco de Dados ---
 def conectar_bd():
     # Verifica se a tabela 'tarefas' já existe
@@ -77,6 +76,9 @@ st.set_page_config(
     page_title="App de Tarefas",
     layout="wide",
 )
+
+# ESTA É A LINHA QUE VAI RESOLVER O ERRO
+conectar_bd()
 
 st.title("Gerenciador de Tarefas")
 
