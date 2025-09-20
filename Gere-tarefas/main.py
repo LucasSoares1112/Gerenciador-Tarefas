@@ -2,16 +2,12 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
-import os
-if os.path.exists("tarefas.db"):
-    os.remove("tarefas.db")
 from datetime import datetime
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
-    # AQUI ADICIONAMOS A COLUNA 'timestamp'
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tarefas(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,12 +31,10 @@ def adicionar_tarefa():
         st.error("A tarefa não pode estar vazia!")
         return
     
-    # AQUI CAPTURAMOS A DATA E HORA ATUAL
     data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
-    # AQUI INSERIMOS A DATA E HORA NA NOVA TAREFA
     cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp) VALUES (?, ?, ?)", (tarefa, "Pendente", data_hora_atual))
     conn.commit()
     conn.close()
@@ -99,7 +93,6 @@ with st.container():
                     if tarefa_concluida:
                         tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
                         
-                    # AQUI ADICIONAMOS A DATA E HORA
                     data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Criado em: {row['timestamp']}</span>"
 
                     st.markdown(f"""
