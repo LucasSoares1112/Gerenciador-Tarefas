@@ -3,22 +3,23 @@ import pandas as pd
 import sqlite3
 import plotly.express as px
 import os
-from datetime import datetime, date
+from datetime import datetime, date, time
 
+# --- Funções de Banco de Dados ---
 def conectar_bd():
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tarefas';")
     tabela_existe = cursor.fetchone()
 
-    # Se a tabela existe, verifica se ela tem a coluna 'due_date'
     if tabela_existe:
         try:
+            # Verifica se a tabela tem a coluna 'due_date'
             cursor.execute("SELECT due_date FROM tarefas LIMIT 1")
         except sqlite3.OperationalError:
             conn.close()
-            os.remove("tarefas.db") # Apaga o arquivo antigo se a estrutura estiver incorreta
-            return conectar_bd() # Tenta conectar novamente
+            os.remove("tarefas.db")
+            return conectar_bd()
         
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tarefas(
@@ -41,16 +42,20 @@ def carregar_tarefas():
 def adicionar_tarefa():
     tarefa = st.session_state.get("entrada_tarefa", "").strip()
     due_date = st.session_state.get("due_date", None)
-    
+    due_time = st.session_state.get("due_time", None)
+
     if not tarefa:
         st.error("A tarefa não pode estar vazia!")
         return
-    
+
     data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    # Combina a data e a hora de vencimento
+    data_e_hora_vencimento = datetime.combine(due_date, due_time).strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp, due_date) VALUES (?, ?, ?, ?)", (tarefa, "Pendente", data_hora_atual, str(due_date)))
+    cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp, due_date) VALUES (?, ?, ?, ?)", (tarefa, "Pendente", data_hora_atual, data_e_hora_vencimento))
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
@@ -72,9 +77,7 @@ def deletar_tarefa(tarefa_id):
     conn.close()
     st.rerun()
 
-# ESTA É A LINHA QUE VAI RESOLVER O ERRO
-conectar_bd()
-
+# --- Layout do Aplicativo ---
 st.set_page_config(
     page_title="App de Tarefas",
     layout="wide",
@@ -82,11 +85,13 @@ st.set_page_config(
 
 st.title("Gerenciador de Tarefas")
 
-col_input, col_date, col_btn = st.columns([6, 2, 1])
+col_input, col_date, col_time, col_btn = st.columns([5, 2, 1, 1])
 with col_input:
     st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
 with col_date:
-    st.date_input("Data de Vencimento:", key="due_date", value=date.today())
+    st.date_input("Data de Vencimento:", key="due_date", value=date.today(), label_visibility="collapsed")
+with col_time:
+    st.time_input("Hora de Vencimento:", key="due_time", value=time(23, 59), label_visibility="collapsed")
 with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
@@ -101,14 +106,14 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
                 
-                # VERIFICA SE A COLUNA 'due_date' EXISTE
+                # VERIFICA SE A TAREFA ESTÁ ATRASADA COM BASE EM DATA E HORA
                 if 'due_date' in row and row['due_date']:
                     try:
-                        data_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d").date()
-                        hoje = date.today()
-                        tarefa_atrasada = data_vencimento < hoje and not tarefa_concluida
+                        data_e_hora_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d %H:%M:%S")
+                        agora = datetime.now()
+                        tarefa_atrasada = agora > data_e_hora_vencimento and not tarefa_concluida
                         borda_cor = "red" if tarefa_atrasada else "#3b82f6"
-                        data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_vencimento.strftime('%d/%m/%Y')}</span>"
+                        data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_e_hora_vencimento.strftime('%d/%m/%Y %H:%M:%S')}</span>"
                     except (ValueError, TypeError):
                         borda_cor = "#3b82f6"
                         data_texto = "<br><span style='font-size: 0.8em; color: gray;'>Vencimento: N/A</span>"
