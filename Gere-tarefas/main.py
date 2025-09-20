@@ -83,13 +83,17 @@ st.set_page_config(
 
 st.title("Gerenciador de Tarefas")
 
+# Define os valores padrão para a data e a hora atuais
+data_hoje = datetime.now().date()
+hora_agora = datetime.now().time()
+
 col_input, col_date, col_time, col_btn = st.columns([5, 2, 1, 1])
 with col_input:
     st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
 with col_date:
-    st.date_input("Data de Vencimento:", key="due_date", value=date.today(), label_visibility="collapsed")
+    st.date_input("Data de Vencimento:", key="due_date", value=data_hoje, label_visibility="collapsed")
 with col_time:
-    st.time_input("Hora de Vencimento:", key="due_time", value=time(23, 59), label_visibility="collapsed")
+    st.time_input("Hora de Vencimento:", key="due_time", value=hora_agora, label_visibility="collapsed")
 with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
@@ -110,7 +114,7 @@ with st.container():
                         data_e_hora_vencimento = datetime.strptime(row["due_date"], "%Y-%m-%d %H:%M:%S")
                         agora = datetime.now()
                         tarefa_atrasada = agora > data_e_hora_vencimento and not tarefa_concluida
-                        borda_cor = "#e74c3c" if tarefa_atrasada else "#3b82f6"
+                        borda_cor = "red" if tarefa_atrasada else "#3b82f6"
                         data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_e_hora_vencimento.strftime('%d/%m/%Y %H:%M:%S')}</span>"
                     except (ValueError, TypeError):
                         borda_cor = "#3b82f6"
