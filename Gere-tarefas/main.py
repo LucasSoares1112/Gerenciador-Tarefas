@@ -11,13 +11,14 @@ def conectar_bd():
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tarefas';")
     tabela_existe = cursor.fetchone()
 
+    # Se a tabela existe, verifica se ela tem a coluna 'due_date'
     if tabela_existe:
         try:
             cursor.execute("SELECT due_date FROM tarefas LIMIT 1")
         except sqlite3.OperationalError:
             conn.close()
-            os.remove("tarefas.db")
-            return conectar_bd()
+            os.remove("tarefas.db") # Apaga o arquivo antigo se a estrutura estiver incorreta
+            return conectar_bd() # Tenta conectar novamente
         
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tarefas(
@@ -71,6 +72,9 @@ def deletar_tarefa(tarefa_id):
     conn.close()
     st.rerun()
 
+# ESTA É A LINHA QUE VAI RESOLVER O ERRO
+conectar_bd()
+
 st.set_page_config(
     page_title="App de Tarefas",
     layout="wide",
@@ -106,11 +110,9 @@ with st.container():
                         borda_cor = "red" if tarefa_atrasada else "#3b82f6"
                         data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Vencimento: {data_vencimento.strftime('%d/%m/%Y')}</span>"
                     except (ValueError, TypeError):
-                        # Se a data estiver em formato inválido
                         borda_cor = "#3b82f6"
                         data_texto = "<br><span style='font-size: 0.8em; color: gray;'>Vencimento: N/A</span>"
                 else:
-                    # Se a coluna 'due_date' não existir
                     borda_cor = "#3b82f6"
                     data_texto = ""
 
