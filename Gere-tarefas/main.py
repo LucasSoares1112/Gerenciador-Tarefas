@@ -4,6 +4,9 @@ import sqlite3
 import plotly.express as px
 import os
 from datetime import datetime
+import os
+if os.path.exists("tarefas.db"):
+    os.remove("tarefas.db")
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
