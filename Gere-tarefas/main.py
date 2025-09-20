@@ -2,12 +2,26 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
+import os
 from datetime import datetime
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
+    # Verifica se a tabela 'tarefas' já existe
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tarefas';")
+    tabela_existe = cursor.fetchone()
+
+    # Se a tabela existe, verifica se ela tem a coluna 'timestamp'
+    if tabela_existe:
+        try:
+            cursor.execute("SELECT timestamp FROM tarefas LIMIT 1")
+        except sqlite3.OperationalError:
+            conn.close()
+            os.remove("tarefas.db") # Apaga o arquivo antigo se a estrutura estiver incorreta
+            return conectar_bd() # Tenta conectar novamente
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tarefas(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
