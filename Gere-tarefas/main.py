@@ -83,19 +83,16 @@ st.set_page_config(
 
 st.title("Gerenciador de Tarefas")
 
-# Define os valores padrão para a data e a hora atuais
-data_hoje = datetime.now().date()
-hora_agora = datetime.now().time()
-
+# --- NOVO CÓDIGO PARA ALINHAMENTO DO BOTÃO ---
 col_input, col_date, col_time, col_btn = st.columns([5, 2, 1, 1])
 with col_input:
     st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
 with col_date:
-    st.date_input("Data de Vencimento:", key="due_date", value=data_hoje, label_visibility="collapsed")
+    st.date_input("Data de Vencimento:", key="due_date", value=date.today(), label_visibility="collapsed")
 with col_time:
-    st.time_input("Hora de Vencimento:", key="due_time", value=hora_agora, label_visibility="collapsed")
+    st.time_input("Hora de Vencimento:", key="due_time", value=time(datetime.now().hour, datetime.now().minute), label_visibility="collapsed")
 with col_btn:
-    st.markdown("<br>", unsafe_allow_html=True)
+    # AQUI ESTÁ O AJUSTE FINAL: BOTAO E CAMPO NA MESMA COLUNA
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
 
 conectar_bd()
