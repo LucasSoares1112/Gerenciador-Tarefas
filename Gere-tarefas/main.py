@@ -38,7 +38,7 @@ def adicionar_tarefa():
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
-    st.rerun()
+    st.rerun() # <-- CORRIGIDO AQUI
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, novo_status):
@@ -47,7 +47,7 @@ def atualizar_status(tarefa_id, novo_status):
     cursor.execute("UPDATE tarefas SET status = ? WHERE id = ?", (novo_status, tarefa_id))
     conn.commit()
     conn.close()
-    st.rerun()
+    st.rerun() # <-- CORRIGIDO AQUI
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
@@ -56,8 +56,7 @@ def deletar_tarefa(tarefa_id):
     cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
     conn.commit()
     conn.close()
-    st.rerun()
-
+    st.rerun() # <-- CORRIGIDO AQUI
 
 # --- Layout do Aplicativo ---
 st.set_page_config(
@@ -66,8 +65,9 @@ st.set_page_config(
 )
 
 st.title("Gerenciador de Tarefas")
-st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa")
-st.button("Adicionar", on_click=adicionar_tarefa)
+
+# Adiciona uma nova tarefa quando o usuário digita e aperta Enter
+st.text_input("Adicione uma nova tarefa e pressione Enter:", key="entrada_tarefa", on_change=adicionar_tarefa)
 
 # Carregar tarefas
 lista_tarefas = carregar_tarefas()
@@ -78,35 +78,30 @@ with st.container():
 
     with col_esq:
         if not lista_tarefas.empty:
+            st.header("Lista de Tarefas")
             for index, row in lista_tarefas.iterrows():
-                c1, c2, c3 = st.columns([5, 2, 1])
-                with c1:
-                    # NOVA ESTILIZAÇÃO SIMPLIFICADA
-                    st.markdown(f"""
-                        <div style="background: #f8fafc; padding: 1rem; border-left: 4px solid #3b82f6; border-radius: 8px;">
-                            {row["tarefa"]}
-                        </div>
-                    """, unsafe_allow_html=True)
+                tarefa_concluida = row["status"] == "Concluída"
                 
-                opcoes_status = ["Pendente", "Concluída"]
-                status_atual = row["status"]
+                col1, col2 = st.columns([1, 10])
 
-                with c2:
-                    novo_status = st.selectbox(
-                        "Status",
-                        opcoes_status,
-                        index=opcoes_status.index(status_atual),
-                        key=f"status_{row['id']}"
-                    )
+                with col1:
+                    checkbox_state = st.checkbox("", key=f"checkbox_{row['id']}", value=tarefa_concluida)
                 
-                if novo_status != status_atual:
+                with col2:
+                    if checkbox_state:
+                        st.markdown(f"~~{row['tarefa']}~~")
+                    else:
+                        st.markdown(f"{row['tarefa']}")
+                
+                # Atualiza o status quando o checkbox muda
+                novo_status = "Concluída" if checkbox_state else "Pendente"
+                if novo_status != row["status"]:
                     atualizar_status(row["id"], novo_status)
+                
+                # Botão de deletar
+                if st.button("🗑️", key=f"delete_{row['id']}"):
+                    deletar_tarefa(row['id'])
 
-                with c3:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("🗑️", key=f"delete_{row['id']}"):
-                        deletar_tarefa(row['id'])
-    
     with col_dir:
         if not lista_tarefas.empty:
             dados_progresso = lista_tarefas['status'].value_counts().reset_index()
