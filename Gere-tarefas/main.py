@@ -4,7 +4,7 @@ import sqlite3
 import plotly.express as px
 from datetime import datetime
 import os
-import pytz # AQUI ADICIONAMOS A BIBLIOTECA pytz
+import pytz
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
@@ -44,9 +44,10 @@ def adicionar_tarefa():
         st.error("A tarefa não pode estar vazia!")
         return
     
-    # CONVERSÃO DE FUSO HORÁRIO PARA SÃO PAULO
+    # PEGA A HORA UTC E CONVERTE PARA SÃO PAULO
+    utc_now = datetime.now(pytz.utc)
     sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
-    data_hora_atual = datetime.now(sao_paulo_tz).strftime("%d/%m/%Y %H:%M:%S")
+    data_hora_atual = utc_now.astimezone(sao_paulo_tz).strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
@@ -107,9 +108,8 @@ with st.container():
                     tarefa_texto = f"<span>{row['tarefa']}</span>"
                     if tarefa_concluida:
                         tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
-                    
-                    # NOVA FRASE E ESTILIZAÇÃO PARA A DATA E HORA
-                    data_texto = f"<br><span style='font-size: 0.8em; color: #888;'>Adicionado em: {row['timestamp']}</span>"
+                        
+                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Adicionado em: {row['timestamp']}</span>"
 
                     st.markdown(f"""
                         <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
