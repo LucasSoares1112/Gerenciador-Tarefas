@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
+from datetime import datetime
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
@@ -11,14 +12,15 @@ def conectar_bd():
         CREATE TABLE IF NOT EXISTS tarefas(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tarefa TEXT NOT NULL,
-            status TEXT NOT NULL
+            status TEXT NOT NULL,
+            timestamp TEXT NOT NULL
         )
     """)
     conn.commit()
     return conn
 
 def carregar_tarefas():
-    conn = conectar_bd()
+    conn = sqlite3.connect("tarefas.db")
     df = pd.read_sql("SELECT * FROM tarefas", conn)
     conn.close()
     return df
@@ -28,10 +30,12 @@ def adicionar_tarefa():
     if not tarefa:
         st.error("A tarefa não pode estar vazia!")
         return
+    
+    data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tarefas (tarefa, status) VALUES (?, ?)", (tarefa, "Pendente"))
+    cursor.execute("INSERT INTO tarefas (tarefa, status, timestamp) VALUES (?, ?, ?)", (tarefa, "Pendente", data_hora_atual))
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
@@ -85,19 +89,18 @@ with st.container():
                     checkbox_state = st.checkbox("", key=f"checkbox_{row['id']}", value=tarefa_concluida, label_visibility="collapsed")
                 
                 with col_txt:
-                    if checkbox_state:
-                        # Risco via HTML para não mostrar o ~~
-                        st.markdown(f"""
-                            <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
-                                <span style="text-decoration: line-through;">{row['tarefa']}</span>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                            <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
-                                {row['tarefa']}
-                            </div>
-                        """, unsafe_allow_html=True)
+                    tarefa_texto = f"<span>{row['tarefa']}</span>"
+                    if tarefa_concluida:
+                        tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
+                        
+                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Criado em: {row['timestamp']}</span>"
+
+                    st.markdown(f"""
+                        <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
+                            {tarefa_texto}
+                            {data_texto}
+                        </div>
+                    """, unsafe_allow_html=True)
                 
                 with col_lix:
                     st.markdown("<br>", unsafe_allow_html=True)
