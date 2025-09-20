@@ -64,9 +64,9 @@ st.title("Gerenciador de Tarefas")
 # Campo de entrada de tarefa com botão Add separado
 col_input, col_btn = st.columns([8, 1])
 with col_input:
-    st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed") # Esconde o label para layout
+    st.text_input("Adicione uma nova tarefa:", key="entrada_tarefa", label_visibility="collapsed")
 with col_btn:
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento para alinhar o botão
+    st.markdown("<br>", unsafe_allow_html=True)
     st.button("Adicionar", on_click=adicionar_tarefa, use_container_width=True)
 
 
@@ -79,22 +79,19 @@ with st.container():
 
     with col_esq:
         if not lista_tarefas.empty:
-            # Remover o st.header("Lista de Tarefas") daqui
-
             for index, row in lista_tarefas.iterrows():
                 tarefa_concluida = row["status"] == "Concluída"
 
                 # Layout de três colunas para cada tarefa: checkbox, texto e lixeira
-                col_chk, col_txt, col_lix = st.columns([0.8, 5, 1]) # Proporções ajustadas
-
+                col_chk, col_txt, col_lix = st.columns([0.8, 5, 1])
+                
                 with col_chk:
-                    # Ajusta a posição do checkbox
-                    st.markdown("<br>", unsafe_allow_html=True) # Alinha o checkbox
+                    # Alinha o checkbox
+                    st.markdown("<br>", unsafe_allow_html=True)
                     checkbox_state = st.checkbox("", key=f"checkbox_{row['id']}", value=tarefa_concluida, label_visibility="collapsed")
                 
                 with col_txt:
                     # Restaura a estilização de caixa para a tarefa
-                    # Usa st.markdown para aplicar a caixa e o riscado
                     tarefa_texto = f"~~{row['tarefa']}~~" if checkbox_state else row['tarefa']
                     st.markdown(f"""
                         <div style = "padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px;
@@ -104,7 +101,8 @@ with st.container():
                     """, unsafe_allow_html=True)
 
                 with col_lix:
-                    st.markdown("<br>", unsafe_allow_html=True) # Alinha o botão de lixeira
+                    # Alinha o botão de lixeira
+                    st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("🗑️", key=f"delete_{row['id']}", help="Excluir Tarefa"):
                         deletar_tarefa(row['id'])
                 
@@ -142,10 +140,10 @@ with st.container():
 
             fig.update_layout(
                 title_font_size=22,
-                title_font_color="white", # Cor do título para tema escuro
-                font=dict(family="Segoe UI, sans-serif", size=16, color="white"), # Cor do texto da legenda para tema escuro
-                paper_bgcolor="rgba(0,0,0,0)", # Fundo do papel transparente
-                plot_bgcolor="rgba(0,0,0,0)", # Fundo do gráfico transparente
+                title_font_color="white",
+                font=dict(family="Segoe UI, sans-serif", size=16, color="white"),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=True,
                 legend=dict(
                     orientation="h",
@@ -153,7 +151,7 @@ with st.container():
                     y=-0.2,
                     xanchor="center",
                     x=0.5,
-                    font=dict(size=14, color="white") # Cor da legenda para tema escuro
+                    font=dict(size=14, color="white")
                 )
             )
 
