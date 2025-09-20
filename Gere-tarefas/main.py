@@ -2,26 +2,25 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
-import os
 from datetime import datetime
+import os
+import pytz # AQUI ADICIONAMOS A BIBLIOTECA pytz
 
 # --- Funções de Banco de Dados ---
 def conectar_bd():
-    # Verifica se a tabela 'tarefas' já existe
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tarefas';")
     tabela_existe = cursor.fetchone()
 
-    # Se a tabela existe, verifica se ela tem a coluna 'timestamp'
     if tabela_existe:
         try:
             cursor.execute("SELECT timestamp FROM tarefas LIMIT 1")
         except sqlite3.OperationalError:
             conn.close()
-            os.remove("tarefas.db") # Apaga o arquivo antigo se a estrutura estiver incorreta
-            return conectar_bd() # Tenta conectar novamente
-
+            os.remove("tarefas.db")
+            return conectar_bd()
+        
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tarefas(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +44,9 @@ def adicionar_tarefa():
         st.error("A tarefa não pode estar vazia!")
         return
     
-    data_hora_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    # CONVERSÃO DE FUSO HORÁRIO PARA SÃO PAULO
+    sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+    data_hora_atual = datetime.now(sao_paulo_tz).strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect("tarefas.db")
     cursor = conn.cursor()
@@ -77,9 +78,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# ESTA É A LINHA QUE VAI RESOLVER O ERRO
-conectar_bd()
-
 st.title("Gerenciador de Tarefas")
 
 col_input, col_btn = st.columns([8, 1])
@@ -109,8 +107,9 @@ with st.container():
                     tarefa_texto = f"<span>{row['tarefa']}</span>"
                     if tarefa_concluida:
                         tarefa_texto = f"<span style='text-decoration: line-through;'>{row['tarefa']}</span>"
-                        
-                    data_texto = f"<br><span style='font-size: 0.8em; color: gray;'>Criado em: {row['timestamp']}</span>"
+                    
+                    # NOVA FRASE E ESTILIZAÇÃO PARA A DATA E HORA
+                    data_texto = f"<br><span style='font-size: 0.8em; color: #888;'>Adicionado em: {row['timestamp']}</span>"
 
                     st.markdown(f"""
                         <div style="padding: 1rem; margin: 0.5rem 0; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); color: black;">
