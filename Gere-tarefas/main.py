@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.express as px
+import os
+if os.path.exists("tarefas.db"):
+    os.remove("tarefas.db")
 from datetime import datetime
 
 # --- Funções de Banco de Dados ---
