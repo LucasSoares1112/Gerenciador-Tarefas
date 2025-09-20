@@ -38,7 +38,7 @@ def adicionar_tarefa():
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
-    st.experimental_rerun()
+    st.rerun() # <-- CORRIGIDO AQUI
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, novo_status):
@@ -47,7 +47,7 @@ def atualizar_status(tarefa_id, novo_status):
     cursor.execute("UPDATE tarefas SET status = ? WHERE id = ?", (novo_status, tarefa_id))
     conn.commit()
     conn.close()
-    st.experimental_rerun()
+    st.rerun() # <-- CORRIGIDO AQUI
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
@@ -56,7 +56,7 @@ def deletar_tarefa(tarefa_id):
     cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
     conn.commit()
     conn.close()
-    st.experimental_rerun()
+    st.rerun() # <-- CORRIGIDO AQUI
 
 
 # --- Layout do Aplicativo ---
