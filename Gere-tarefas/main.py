@@ -38,7 +38,7 @@ def adicionar_tarefa():
     conn.commit()
     conn.close()
     st.session_state["entrada_tarefa"] = ""
-    st.rerun() # <-- CORRIGIDO AQUI
+    st.rerun()
 
 # Atualizar status das tarefas
 def atualizar_status(tarefa_id, novo_status):
@@ -47,7 +47,7 @@ def atualizar_status(tarefa_id, novo_status):
     cursor.execute("UPDATE tarefas SET status = ? WHERE id = ?", (novo_status, tarefa_id))
     conn.commit()
     conn.close()
-    st.rerun() # <-- CORRIGIDO AQUI
+    st.rerun()
 
 # Deletar tarefas
 def deletar_tarefa(tarefa_id):
@@ -56,7 +56,7 @@ def deletar_tarefa(tarefa_id):
     cursor.execute("DELETE FROM tarefas WHERE id = ?", (tarefa_id,))
     conn.commit()
     conn.close()
-    st.rerun() # <-- CORRIGIDO AQUI
+    st.rerun()
 
 
 # --- Layout do Aplicativo ---
@@ -81,9 +81,9 @@ with st.container():
             for index, row in lista_tarefas.iterrows():
                 c1, c2, c3 = st.columns([5, 2, 1])
                 with c1:
+                    # NOVA ESTILIZAÇÃO SIMPLIFICADA
                     st.markdown(f"""
-                        <div style = "padding: 1rem; margin: 1rem 0; background: #f8fafc; border-radius: 8px;
-                        border-left: 4px solid #3b82f6; box-shadow: 2px 2px 6px rgba(0,0,0,0.05) ">
+                        <div style="background: #f8fafc; padding: 1rem; border-left: 4px solid #3b82f6; border-radius: 8px;">
                             {row["tarefa"]}
                         </div>
                     """, unsafe_allow_html=True)
